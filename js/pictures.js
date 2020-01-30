@@ -16,6 +16,8 @@ let descriptions = [ "Тестим новую камеру!",
 const MAX_NUMBER_IMAGE = 26;
 const MAX_VALUE_RESIZE = 105;
 const MIN_VALUE_RESIZE = 30;
+const MAX_RANGE_PIN = 450;
+const MIN_RANGE_PIN = 0;
 
 function getRandomInteger(min, max) {
     // случайное число от min до (max+1)
@@ -52,6 +54,7 @@ document.querySelector(".gallery-overlay-close").addEventListener("click", funct
 let uploadOverlay = document.querySelector(".upload-overlay");
 let uploadResizeControls = uploadOverlay.querySelector(".upload-resize-controls-value");
 let uploadOverlayImage = uploadOverlay.querySelector(".effect-image-preview");
+let uploadHashTags = uploadOverlay.querySelector(".upload-form-hashtags");
 
 document.querySelector("#upload-file").addEventListener("change", function() {
     // document.querySelector(".gallery-overlay").classList.remove("hidden")
@@ -66,12 +69,10 @@ document.querySelector("#upload-cancel").addEventListener("click", function() {
 
 uploadOverlay.querySelector(".upload-resize-controls-button-inc").addEventListener("click", function () {
     let uploadResizeControlsValue = parseFloat(uploadResizeControls.value);
-    let temp;
     if(uploadResizeControlsValue < MAX_VALUE_RESIZE) {
         uploadResizeControls.setAttribute("value", uploadResizeControlsValue + 25 + "%");
         uploadOverlayImage.style.transform = "scale(" + (uploadResizeControlsValue + 25) / 100 + ")";
     }
-    console.log((uploadResizeControlsValue + 25)/100);
 })
 
 
@@ -82,36 +83,92 @@ uploadOverlay.querySelector(".upload-resize-controls-button-dec").addEventListen
         uploadResizeControls.setAttribute("value", uploadResizeControlsValue - 25 + "%");
         uploadOverlay.querySelector(".effect-image-preview").style.transform = "scale(" + (uploadResizeControlsValue - 25) / 100 + ")";
     }
-
-    document.querySelector("h2").textContent
 })
-
+let initialProportion = 0.2;
 document.querySelector(".upload-effect-controls").addEventListener("click", function(evt) {
-// 	evt.target.attribute("id").equals
+
     if(evt.target.value=="sepia"){
-        uploadOverlayImage.style.filter = "sepia("+1+")";
+        uploadOverlayImage.setAttribute("data-filter-name", "sepia");
+        uploadOverlayImage.style.filter = "sepia("+1*initialProportion+")";
     } else if(evt.target.value=="chrome"){
-        uploadOverlayImage.style.filter = "grayscale("+1+")";
+        uploadOverlayImage.setAttribute("data-filter-name", "grayscale");
+        uploadOverlayImage.style.filter = "grayscale("+1*initialProportion+")";
     } else if(evt.target.value=="phobos") {
-        uploadOverlayImage.style.filter = "blur("+5+"px)";
+        uploadOverlayImage.setAttribute("data-filter-name", "blur");
+        uploadOverlayImage.style.filter = "blur("+20*initialProportion+"px)";
     } else if(evt.target.value=="heat") {
-        uploadOverlayImage.style.filter = "brightness("+3+")";
+        uploadOverlayImage.setAttribute("data-filter-name", "brightness");
+        uploadOverlayImage.style.filter = "brightness("+20*initialProportion+")";
     } else if(evt.target.value=="marvin") {
-        uploadOverlayImage.style.filter = "invert("+1+")";
+        uploadOverlayImage.setAttribute("data-filter-name", "invert");
+        uploadOverlayImage.style.filter = "invert("+1*initialProportion+")";
     } else if(evt.target.value=="none") {
+        uploadOverlayImage.setAttribute("data-filter-name", "none");
         uploadOverlayImage.style.filter = "none";
     }
+})
+uploadHashTags.setAttribute("minlength",2);
+uploadHashTags.setAttribute("maxlength",20);
+uploadHashTags.setAttribute("required","required");
+uploadHashTags.setAttribute("pattern","#[0-9a-z]+");
 
-    console.log(evt.target.value);
+uploadHashTags.addEventListener("invalid", function (evt) {
+    if(uploadHashTags.validity.tooShort){
+        uploadHashTags.setCustomValidity("длинна поля, должна быть более 2-ух символов");
+    }else if(uploadHashTags.validity.valueMissing) {
+        uploadHashTags.setCustomValidity("Вам нужно указать хеш тег")
+    }else if(uploadHashTags.validity.patternMismatch) {
+        uploadHashTags.setCustomValidity("Хеш тэг начинается с символа #")
+    uploadHashTags.value.split()
+    }else{
+        uploadHashTags.setCustomValidity("")
+    }
 })
 
+let effectLevelPin = document.querySelector(".upload-effect-level-pin");
 
+effectLevelPin.addEventListener("mousedown", function(evt) {
+    evt.preventDefault();
+    let nameFilter = uploadOverlayImage.getAttribute("data-filter-name");
+    let startCords = {
+        x : evt.clientX
+    }
 
+    function onMouseMove(moveEvt){
+        let shift = {
+            x: startCords.x - moveEvt.clientX
+        }
+        startCords = {
+            x : moveEvt.clientX
+        }
 
+        let moveDifference = effectLevelPin.offsetLeft - shift.x;
+        let proportion = (moveDifference/MAX_RANGE_PIN).toFixed(2);
+        initialProportion = proportion;
 
+        if(moveDifference > MIN_RANGE_PIN && moveDifference < MAX_RANGE_PIN){
+            effectLevelPin.style.left = (moveDifference) + "px";
+            uploadOverlay.querySelector(".upload-effect-level-val").style.width = moveDifference + "px";
 
-
-
-
-
-
+            if(nameFilter=="sepia"){
+                uploadOverlayImage.style.filter = "sepia("+1*proportion+")";
+            }else if(nameFilter=="grayscale"){
+                uploadOverlayImage.style.filter = "grayscale("+1*proportion+")";
+            }else if(nameFilter=="blur"){
+                uploadOverlayImage.style.filter = "blur("+20*proportion+"px)";
+            }else if(nameFilter=="brightness"){
+                uploadOverlayImage.style.filter = "brightness("+20*proportion+")";
+            }else if(nameFilter=="invert"){
+                uploadOverlayImage.style.filter = "invert("+1*proportion+")";
+            }else if(nameFilter=="invert"){
+                uploadOverlayImage.style.filter = "none";
+            }
+        }
+    }
+    function onMouseUp(){
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+    }
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp)
+})
