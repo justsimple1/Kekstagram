@@ -11,15 +11,31 @@ function getRandomInteger(min, max) {
     let rand = min + Math.random() * (max + 1 - min);
     return Math.floor(rand);
 }
+(function () {
 
-let simillarListElement = document.querySelector(".pictures");
-let similarPictureTemplate = document.querySelector("#picture-template").content.querySelector(".picture");
-//picture.js
-for (let i=1;i < MAX_NUMBER_IMAGE; i++ ){
-    let pictureTemp = similarPictureTemplate.cloneNode(true);
-    pictureTemp.querySelector("img").src = "photos/"+i+".jpg";
-    pictureTemp.querySelector(".picture-likes").textContent =  getRandomInteger(15,200);
-    pictureTemp.querySelector(".picture-comments").textContent = getRandomInteger(1,15);
-    simillarListElement.appendChild(pictureTemp);
-}
+    let simillarListElement = document.querySelector(".pictures");
+    let similarPictureTemplate = document.querySelector("#picture-template").content.querySelector(".picture");
+    let form = document.querySelector('#upload-select-image');
+        form.addEventListener('submit', function (evt) {
+        window.upload(new FormData(form), function (response) {
+        })
+        evt.preventDefault();
+        document.querySelector(".upload-overlay").classList.add('hidden');
+    })
 
+    function renderMiniature(data){
+        let pictureTemp = similarPictureTemplate.cloneNode(true);
+        pictureTemp.querySelector("img").src = data.url;
+        pictureTemp.querySelector(".picture-likes").textContent = data.likes;
+        pictureTemp.querySelector(".picture-comments").textContent = data.comments.length ;
+        return pictureTemp;
+
+    }
+
+    window.load( function (backend) {
+        let fragment = document.createDocumentFragment();
+        for (let i=1;i < MAX_NUMBER_IMAGE; i++ ) {
+            fragment.appendChild(renderMiniature(backend[i]))
+            simillarListElement.appendChild(fragment);
+        }});
+})();
